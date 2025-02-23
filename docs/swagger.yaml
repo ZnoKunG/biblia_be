@@ -1,0 +1,303 @@
+definitions:
+  model.CreateRecord:
+    properties:
+      bookID:
+        type: integer
+      curr_chapter:
+        type: integer
+      curr_progress:
+        type: integer
+      status:
+        type: string
+      userID:
+        type: integer
+    type: object
+  model.CreateUser:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  model.Record:
+    properties:
+      bookID:
+        type: integer
+      created_at:
+        type: string
+      curr_chapter:
+        type: integer
+      curr_progress:
+        type: integer
+      finish_date:
+        type: string
+      id:
+        type: integer
+      started_date:
+        type: string
+      status:
+        type: string
+      stop_date:
+        type: string
+      update_date:
+        type: string
+      userID:
+        type: integer
+    type: object
+  model.UpdateRecord:
+    properties:
+      curr_chapter:
+        type: integer
+      curr_progress:
+        type: integer
+      status:
+        type: string
+    type: object
+  model.UpdateUser:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  model.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      password:
+        type: string
+      records:
+        items:
+          $ref: '#/definitions/model.Record'
+        type: array
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /record:
+    get:
+      consumes:
+      - application/json
+      description: return all record objects in the database
+      parameters:
+      - description: user-owned record search by userId
+        in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Record'
+            type: array
+      summary: Get all records
+      tags:
+      - record
+    post:
+      consumes:
+      - application/json
+      description: Create a new record
+      parameters:
+      - description: Record data
+        in: body
+        name: record
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateRecord'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Record'
+      summary: Create a new record
+      tags:
+      - record
+  /record/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one record with coresponding id
+      parameters:
+      - description: Record ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete record with its id
+      tags:
+      - record
+    get:
+      consumes:
+      - application/json
+      description: return one record with coresponding id
+      parameters:
+      - description: Record ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Record'
+      summary: Get record with its id
+      tags:
+      - record
+    put:
+      consumes:
+      - application/json
+      description: update one record with coresponding id
+      parameters:
+      - description: Record ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Record data
+        in: body
+        name: record
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateRecord'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Record'
+      summary: Update record with the id
+      tags:
+      - record
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: return all user objects in the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.User'
+            type: array
+      summary: Get all users
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateUser'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.User'
+      summary: Create a new user
+      tags:
+      - user
+  /user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one user with coresponding id
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete user with its id
+      tags:
+      - user
+    get:
+      consumes:
+      - application/json
+      description: return one user with coresponding id
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+      summary: Get user with its id
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: update one user with coresponding id
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+      summary: Update user with the id
+      tags:
+      - user
+swagger: "2.0"
