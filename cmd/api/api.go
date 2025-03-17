@@ -5,10 +5,8 @@ import (
 	"biblia-be/internal/handler"
 	"log"
 
-	docs "biblia-be/docs"
-
 	"github.com/gin-gonic/gin"
-	swaggerfiles "github.com/swaggo/files"
+	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/gorm"
 )
@@ -65,6 +63,20 @@ func setupRouter(db *gorm.DB) *gin.Engine {
 	return router
 }
 
+// @title Biblia Backend API
+// @version 1.0
+// @description This is a biblia backend API server.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host biblia.swagger.io:3000
+// @BasePath /v2
 func (app *application) run() {
 	db, err := db.NewDB(
 		app.config.db.host,
@@ -82,12 +94,8 @@ func (app *application) run() {
 
 	router := setupRouter(db)
 
-	docs.SwaggerInfo.Title = "Biblia Backend API"
-	docs.SwaggerInfo.Description = "This is a biblia backend API server."
-	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.Host = app.config.host + app.config.addr
-	docs.SwaggerInfo.Schemes = []string{"http", "https"}
+	url := ginSwagger.URL("http://.swagger.io:3000/swagger/doc.json") // The url pointing to API definition
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
-	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	router.Run(app.config.addr)
 }
