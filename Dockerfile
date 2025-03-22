@@ -22,7 +22,7 @@ FROM debian:buster-slim
 WORKDIR /app
 
 COPY --from=build /app/main .
-COPY --from=build /app/cmd/generated/docs ./generated/docs
+COPY --from=build /app/generated/docs ./generated/docs
 
 COPY .env.* .
 

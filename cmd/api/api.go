@@ -5,6 +5,8 @@ import (
 	"biblia-be/internal/handler"
 	"log"
 
+	_ "biblia-be/generated/docs"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -54,29 +56,17 @@ func setupRouter(db *gorm.DB) *gin.Engine {
 	recordHandler := handler.RecordHandler{}
 	recordHandler.Initialize(db)
 
-	router.GET("record", recordHandler.GetRecords)
-	router.GET("record/:id", recordHandler.GetRecord)
-	router.POST("record", recordHandler.CreateRecord)
-	router.PUT("record/:id", recordHandler.UpdateRecord)
-	router.DELETE("record/:id", recordHandler.DeleteRecord)
+	router.GET("records", recordHandler.GetRecords)
+	router.POST("records", recordHandler.CreateRecord)
+	router.PUT("records", recordHandler.UpdateRecord)
+	router.DELETE("records", recordHandler.DeleteRecord)
 
 	return router
 }
 
 // @title Biblia Backend API
 // @version 1.0
-// @description This is a biblia backend API server.
-// @termsOfService http://swagger.io/terms/
-
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host biblia.swagger.io:3000
-// @BasePath /v2
+// @description This is a Biblia backend server.
 func (app *application) run() {
 	db, err := db.NewDB(
 		app.config.db.host,
@@ -94,8 +84,8 @@ func (app *application) run() {
 
 	router := setupRouter(db)
 
-	url := ginSwagger.URL("http://.swagger.io:3000/swagger/doc.json") // The url pointing to API definition
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
+	url := ginSwagger.URL("/docs/doc.json")
+	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
 	router.Run(app.config.addr)
 }

@@ -21,61 +21,51 @@ func (handler *RecordHandler) Initialize(db *gorm.DB) {
 //
 //	@Summary	Get all records
 //	@Schemes
-//	@Description	return all record objects in the database
+//	@Description	return all record objects regarding userId and bookId
 //	@Tags			record
 //	@Accept			json
 //	@Produce		json
 //
-// @Param userId query int false "user-owned record search by userId"
+// @Param userId query int false "the owner's user id of the record"
+// @Param bookId query int false "book id of that user's record"
 //
 //	@Success		200	{array}	model.Record
-//	@Router			/record [get]
+//	@Router			/records [get]
 func (handler *RecordHandler) GetRecords(c *gin.Context) {
 	records := []model.Record{}
-	userId, userIdExists := c.GetQuery("userId")
-	user := model.User{}
+	userId, hasUserId := c.GetQuery("userId")
+	bookId, hasBookId := c.GetQuery("bookId")
 
-	// Query all records with no condition
-	if !userIdExists {
+	// If neither userId nor bookId are provided, return all records
+	if !hasUserId && !hasBookId {
 		handler.db.Find(&records)
 		c.JSON(http.StatusOK, records)
 		return
 	}
 
-	if err := handler.db.Find(&user, userId).Error; err != nil {
-		c.JSON(http.StatusNotFound, err)
+	// If only userId is provided, return all records for that user
+	if hasUserId && !hasBookId {
+		if err := handler.db.Where("userId = ?", userId).Find(&records).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User records not found"})
+			return
+		}
+		c.JSON(http.StatusOK, records)
 		return
 	}
 
-	if err := handler.db.Where("userId <> ?", user.ID).Find(&records).Error; err != nil {
-		c.JSON(http.StatusNotFound, err)
+	// If both userId and bookId are provided, return the specific record
+	if hasUserId && hasBookId {
+		record := model.Record{}
+		if err := handler.db.Where("userId = ? AND bookId = ?", userId, bookId).First(&record).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found for the given user and book"})
+			return
+		}
+		c.JSON(http.StatusOK, record)
 		return
 	}
 
-	c.JSON(http.StatusOK, records)
-}
-
-// GetRecordById godoc
-//
-//	@Summary	Get record with its id
-//	@Schemes
-//	@Description	return one record with coresponding id
-//	@Tags			record
-//	@Accept			json
-//	@Produce		json
-//	@Param			id	path		int	true	"Record ID"
-//	@Success		200	{object}	model.Record
-//	@Router			/record/{id} [get]
-func (handler *RecordHandler) GetRecord(c *gin.Context) {
-	id := c.Param("id")
-	record := model.Record{}
-
-	if err := handler.db.First(&record, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, record)
+	// Default: return empty array if no conditions match
+	c.JSON(http.StatusOK, []model.Record{})
 }
 
 // CreateRecord godoc
@@ -90,7 +80,7 @@ func (handler *RecordHandler) GetRecord(c *gin.Context) {
 // @Param record body model.CreateRecord true "Record data"
 //
 //	@Success		201	{object}	model.Record
-//	@Router			/record [post]
+//	@Router			/records [post]
 func (handler *RecordHandler) CreateRecord(c *gin.Context) {
 	createRecord := model.CreateRecord{}
 
@@ -122,20 +112,31 @@ func (handler *RecordHandler) CreateRecord(c *gin.Context) {
 //	@Tags			record
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path		int	true	"Record ID"
+//
+// @Param userId query int false "the owner's user id of the record"
+// @Param bookId query int false "book id of that user's record"
 //
 // @Param record body model.UpdateRecord true "Updated Record data"
 //
 //	@Success		200	{object}	model.Record
-//	@Router			/record/{id} [put]
+//	@Router			/records/{id} [put]
 func (handler *RecordHandler) UpdateRecord(c *gin.Context) {
-	id := c.Param("id")
 	record := model.Record{}
 	updateRecord := model.UpdateRecord{}
+	userId, hasUserId := c.GetQuery("userId")
+	bookId, hasBookId := c.GetQuery("bookId")
 
-	if err := handler.db.First(&record, id).Error; err != nil {
-		c.Status(http.StatusNotFound)
+	if !hasUserId || !hasBookId {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "both userId and bookId need to be given."})
 		return
+	}
+
+	if hasUserId && hasBookId {
+		record := model.Record{}
+		if err := handler.db.Where("userId = ? AND bookId = ?", userId, bookId).First(&record).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found for the given user and book"})
+			return
+		}
 	}
 
 	if err := c.ShouldBindJSON(&updateRecord); err != nil {
@@ -160,17 +161,26 @@ func (handler *RecordHandler) UpdateRecord(c *gin.Context) {
 //	@Schemes
 //	@Description	Delete one record with coresponding id
 //	@Tags			record
-//	@Param			id	path	int	true	"Record ID"
+//
+// @Param userId query int false "the owner's user id of the record"
+// @Param bookId query int false "book id of that user's record"
+//
 //	@Accept			json
 //	@Produce		json
 //	@Success		204
-//	@Router			/record/{id} [delete]
+//	@Router			/records/{id} [delete]
 func (handler *RecordHandler) DeleteRecord(c *gin.Context) {
-	id := c.Param("id")
+	userId, hasUserId := c.GetQuery("userId")
+	bookId, hasBookId := c.GetQuery("bookId")
 	record := model.Record{}
 
-	if err := handler.db.First(&record, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, err)
+	if !hasUserId || !hasBookId {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "both userId and bookId need to be given."})
+		return
+	}
+
+	if err := handler.db.Where("userId = ? AND bookId = ?", userId, bookId).First(&record).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Record not found for the given user and book"})
 		return
 	}
 
