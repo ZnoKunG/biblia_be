@@ -22,7 +22,7 @@ services:
 
 
   app:
-    build: .
+    build: ./backend
     ports:
       - "3000:3000"
     depends_on:
@@ -30,7 +30,7 @@ services:
         condition: service_healthy
         restart: true
     env_file:
-      - .env.dev
+      - ./backend/.env.dev
 
 volumes:
   db:
